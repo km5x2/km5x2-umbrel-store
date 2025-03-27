@@ -1,0 +1,29 @@
+manifestVersion: 1
+id: pixelpulse-openproject
+name: OpenProject
+tagline: Powerful classic, agile or hybrid project management in a secure environment.
+icon: https://www.openproject.org/assets/images/press/openproject-icon-white-blue-background-ade9a3a9.png
+category: Development
+version: "1.0.0"
+port: 7654
+description: >-
+  Open source project management software
+
+
+  Powerful classic, agile or hybrid project management in a secure environment.
+
+developer: OpenProject
+website: https://www.openproject.org
+submitter: km5x2
+submission: https://github.com/km5x2/open-project-umbrel
+repo: https://github.com/km5x2/open-project-umbrel
+support: https://github.com/km5x2/open-project-umbrel/issues
+gallery:
+  - https://opensource.com/sites/default/files/images/life-uploads/visualize_your_project_plan.png
+  - https://gdm-catalog-fmapi-prod.imgix.net/ProductScreenshot/22583114-20f0-4f90-abce-9a823db0ca52.png
+releaseNotes: >-
+  Inital
+dependencies: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
