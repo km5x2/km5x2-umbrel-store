@@ -1,0 +1,120 @@
+version: "15-slim"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: openproject-web
+      APP_PORT: 7654
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  openproject-web:
+    image: openproject/openproject:15-slim
+    command: "./docker/prod/web"
+    restart: unless-stopped
+    volumes:
+      - ${APP_DATA_DIR}/data/assets:/var/openproject/assets
+    environment:
+      - OPENPROJECT_HTTPS=false
+      - OPENPROJECT_HOST__NAME=${DEVICE_DOMAIN_NAME}:${APP_OPENPROJECT_UI_PORT}
+      - RAILS_CACHE_STORE=memcache
+      - OPENPROJECT_CACHE__MEMCACHE__SERVER=cache:11211
+      - OPENPROJECT_RAILS__RELATIVE__URL__ROOT=
+      - DATABASE_URL=postgres://postgres:p4ssw0rd@db/openproject?pool=20&encoding=unicode&reconnect=true
+      - RAILS_MIN_THREADS=4
+      - RAILS_MAX_THREADS=16
+      - IMAP_ENABLED=false
+    depends_on:
+      - db
+      - cache
+      - seeder
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://${DEVICE_DOMAIN_NAME}:${APP_OPENPROJECT_UI_PORT}/health_checks/default"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+
+  openproject-worker:
+    image: openproject/openproject:15-slim
+    command: "./docker/prod/worker"
+    restart: unless-stopped
+    volumes:
+      - ${APP_DATA_DIR}/data/assets:/var/openproject/assets
+    environment:
+      # Same as web
+      - OPENPROJECT_HTTPS=false
+      - OPENPROJECT_HOST__NAME=${DEVICE_DOMAIN_NAME}:${APP_OPENPROJECT_UI_PORT}
+      - RAILS_CACHE_STORE=memcache
+      - OPENPROJECT_CACHE__MEMCACHE__SERVER=cache:11211
+      - OPENPROJECT_RAILS__RELATIVE__URL__ROOT=
+      - DATABASE_URL=postgres://postgres:p4ssw0rd@db/openproject?pool=20&encoding=unicode&reconnect=true
+      - RAILS_MIN_THREADS=4
+      - RAILS_MAX_THREADS=16
+      - IMAP_ENABLED=false
+    depends_on:
+      - db
+      - cache
+      - seeder
+
+  openproject-cron:
+    image: openproject/openproject:15-slim
+    command: "./docker/prod/cron"
+    restart: unless-stopped
+    volumes:
+      - ${APP_DATA_DIR}/data/assets:/var/openproject/assets
+    environment:
+      # Same as web
+      - OPENPROJECT_HTTPS=false
+      - OPENPROJECT_HOST__NAME=${DEVICE_DOMAIN_NAME}:${APP_OPENPROJECT_UI_PORT}
+      - RAILS_CACHE_STORE=memcache
+      - OPENPROJECT_CACHE__MEMCACHE__SERVER=cache:11211
+      - OPENPROJECT_RAILS__RELATIVE__URL__ROOT=
+      - DATABASE_URL=postgres://postgres:p4ssw0rd@db/openproject?pool=20&encoding=unicode&reconnect=true
+      - RAILS_MIN_THREADS=4
+      - RAILS_MAX_THREADS=16
+      - IMAP_ENABLED=false
+    depends_on:
+      - db
+      - cache
+      - seeder
+
+  openproject-seeder:
+    image: openproject/openproject:15-slim
+    command: "./docker/prod/seeder"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/assets:/var/openproject/assets
+    environment:
+      # Same as web
+      - OPENPROJECT_HTTPS=false
+      - OPENPROJECT_HOST__NAME=${DEVICE_DOMAIN_NAME}:${APP_OPENPROJECT_UI_PORT}
+      - RAILS_CACHE_STORE=memcache
+      - OPENPROJECT_CACHE__MEMCACHE__SERVER=cache:11211
+      - OPENPROJECT_RAILS__RELATIVE__URL__ROOT=
+      - DATABASE_URL=postgres://postgres:p4ssw0rd@db/openproject?pool=20&encoding=unicode&reconnect=true
+      - RAILS_MIN_THREADS=4
+      - RAILS_MAX_THREADS=16
+      - IMAP_ENABLED=false
+
+  db:
+    image: postgres:13
+    restart: unless-stopped
+    stop_grace_period: "3s"
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=p4ssw0rd
+      - POSTGRES_DB=openproject
+
+  cache:
+    image: memcached
+    restart: unless-stopped
+
+  autoheal:
+    image: willfarrell/autoheal:1.2.0
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=autoheal
+      - AUTOHEAL_START_PERIOD=600
+      - AUTOHEAL_INTERVAL=30
